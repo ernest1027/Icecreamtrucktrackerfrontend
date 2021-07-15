@@ -34,9 +34,9 @@ class mapWidget extends StatelessWidget {
             this.controller.complete(controller);
           },
           myLocationEnabled: true,
+          myLocationButtonEnabled: false,
           markers: markerSet,
         ),
-
       ),
     );
   }

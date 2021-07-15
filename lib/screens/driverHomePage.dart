@@ -1,22 +1,23 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart';
 import 'package:ice_cream_truck_app/widgets/dateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/mapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/searchWidget.dart';
 import '../place_service.dart';
 import 'package:geolocator/geolocator.dart';
 
-class customerHomePage extends StatefulWidget {
-  static const String id = 'customerHomePage';
-  customerHomePage({required this.title});
+class driverHomePage extends StatefulWidget {
+  static const String id = 'driverHomePage';
+  driverHomePage({required this.title});
   final String title;
 
   @override
-  _customerHomePageState createState() => _customerHomePageState();
+  _driverHomePageState createState() => _driverHomePageState();
 }
 
-class _customerHomePageState extends State<customerHomePage> {
+class _driverHomePageState extends State<driverHomePage> {
   String placeId = '';
   DateTime date = DateTime.now();
   Set<Marker> markerSet = {};
@@ -25,29 +26,55 @@ class _customerHomePageState extends State<customerHomePage> {
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-
+  bool sharingLocation = false;
+  late Timer timer;
   @override
   void initState() {
     // TODO: implement initState
-
-    updateUserLocation();
+    this.timer = new Timer.periodic(Duration(seconds: 30), (timer) {
+      sendLocation();
+    });
     super.initState();
+    updateUserLocation();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    this.timer.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(IconData(0xe514, fontFamily: 'MaterialIcons')),
-            onPressed: queryAndUpdate,
-          ),
-        ],
+        title: Text(
+            'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'),
+        actions: [],
         bottom: PreferredSize(
           child: Column(
             children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text("Send current location to database"),
+                  ),
+                  Switch(
+                    onChanged: (bool value) {
+                      sendLocation();
+                      setState(() {
+                        sharingLocation = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                    value: sharingLocation,
+                  ),
+                ],
+              ),
               searchWidget(
                 placeId,
                 setPlaceId,
@@ -58,7 +85,7 @@ class _customerHomePageState extends State<customerHomePage> {
               dateTimePickerWidget(date, setDate),
             ],
           ),
-          preferredSize: Size.fromHeight(100),
+          preferredSize: Size.fromHeight(150),
         ),
       ),
       body: mapWidget(
@@ -152,5 +179,15 @@ class _customerHomePageState extends State<customerHomePage> {
       zoom: 14.4746,
     ));
     goToLocation();
+  }
+
+  void sendLocation() async {
+    if (!sharingLocation) return;
+    var position = await Geolocator.getCurrentPosition();
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
+    final request =
+        'http://localhost:8000/location/report?lat=${position.latitude}&lng=${position.longitude}&driver_id=${arguments['driverId'] == '' ? 1 : arguments['driverId']}&time=${DateTime.now().millisecondsSinceEpoch}';
+    var client = Client();
+    client.post(Uri.parse((request)));
   }
 }
