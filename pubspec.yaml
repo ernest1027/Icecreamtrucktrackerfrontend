@@ -29,6 +29,7 @@ dependencies:
   uuid: ^2.0.4
   http: any
   flutter_datetime_picker: ^1.5.1
+  geolocator: ^7.2.0+1
 
 dev_dependencies:
   flutter_test:

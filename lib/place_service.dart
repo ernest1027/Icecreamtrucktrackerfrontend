@@ -38,9 +38,7 @@ class PlaceApiProvider {
 
   final sessionToken;
 
-  static final String androidKey = 'AIzaSyDpn1DGZqFL26rRcEcds_2_lUCmjz2YNlM';
-  static final String iosKey = 'AIzaSyDpn1DGZqFL26rRcEcds_2_lUCmjz2YNlM';
-  final apiKey = Platform.isAndroid ? androidKey : iosKey;
+  final apiKey = 'AIzaSyDpn1DGZqFL26rRcEcds_2_lUCmjz2YNlM';
 
   Future<List<Suggestion>> fetchSuggestions(String input, String lang) async {
     final request =
@@ -50,7 +48,6 @@ class PlaceApiProvider {
     if (response.statusCode == 200) {
       final result = json.decode(response.body);
       if (result['status'] == 'OK') {
-        // compose suggestions in a list
         return result['predictions']
             .map<Suggestion>((p) => Suggestion(p['place_id'], p['description']))
             .toList();
@@ -108,8 +105,10 @@ class PlaceApiProvider {
     final request =
         'http://localhost:8000/location/search?lat=${lat}&lng=${lng}&radius=${radius}&time=${date.millisecondsSinceEpoch}';
     print(request);
+
     final response = await client.get(Uri.parse(request));
     print(json.decode(response.body)["data"]);
+
     return json.decode(response.body)["data"];
   }
 }
