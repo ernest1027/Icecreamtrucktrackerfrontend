@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_datetime_picker/flutter_datetime_picker.dart';
 
-class dateTimePickerWidget extends StatelessWidget {
+class DateTimePickerWidget extends StatelessWidget {
   DateTime date;
   Function setDate;
-  dateTimePickerWidget(this.date, this.setDate) {}
+  DateTimePickerWidget(this.date, this.setDate) {}
 
   @override
   Widget build(BuildContext context) {

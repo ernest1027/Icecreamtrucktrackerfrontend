@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ice_cream_truck_app/screens/customerHomePage.dart';
-import 'package:ice_cream_truck_app/screens/driverHomePage.dart';
-import 'package:ice_cream_truck_app/screens/loginScreen.dart';
+import 'package:ice_cream_truck_app/screens/AddMarkerPage.dart';
+import 'package:ice_cream_truck_app/screens/CustomerHomePage.dart';
+import 'package:ice_cream_truck_app/screens/DriverHomePage.dart';
+import 'package:ice_cream_truck_app/screens/EditMarkerPage.dart';
+import 'package:ice_cream_truck_app/screens/ListScheduledPage.dart';
+import 'package:ice_cream_truck_app/screens/LoginScreen.dart';
 
 void main() {
   runApp(MyApp());
@@ -17,14 +20,15 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.amber,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: loginScreen(),
-      initialRoute: loginScreen.id,
+      home: LoginScreen(),
+      initialRoute: LoginScreen.id,
       routes: {
-        loginScreen.id: (context) => loginScreen(),
-        customerHomePage.id: (context) =>
-            customerHomePage(title: 'Ice Cream Truck Tracker'),
-        driverHomePage.id: (context) =>
-            driverHomePage(title: 'Ice Cream Truck Tracker'),
+        LoginScreen.id: (context) => LoginScreen(),
+        CustomerHomePage.id: (context) => CustomerHomePage(),
+        DriverHomePage.id: (context) => DriverHomePage(),
+        AddMarkerPage.id: (context) => AddMarkerPage(),
+        EditMarkerPage.id: (context) => EditMarkerPage(),
+        ListScheduledPage.id: (context) => ListScheduledPage(),
       },
     );
   }

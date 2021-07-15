@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'place_service.dart';
+import 'package:ice_cream_truck_app/classes/Suggestion.dart';
+import 'PlacesApiProvider.dart';
 
 class AddressSearch extends SearchDelegate<Suggestion> {
   final sessionToken;
-  late PlaceApiProvider apiClient;
+  late PlacesApiProvider apiClient;
 
   AddressSearch(this.sessionToken) {
-    this.apiClient = PlaceApiProvider(sessionToken);
+    this.apiClient = PlacesApiProvider(sessionToken);
   }
 
   @override

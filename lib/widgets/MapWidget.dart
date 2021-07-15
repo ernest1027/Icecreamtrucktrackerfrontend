@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class mapWidget extends StatelessWidget {
+class MapWidget extends StatelessWidget {
   Completer<GoogleMapController> controller;
   Function setMapCenter;
   CameraPosition mapCenter;
   Set<Marker> markerSet;
   Function queryAndUpdate;
 
-  mapWidget(this.controller, this.mapCenter, this.setMapCenter, this.markerSet,
+  MapWidget(this.controller, this.mapCenter, this.setMapCenter, this.markerSet,
       this.queryAndUpdate);
 
   @override

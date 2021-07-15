@@ -1,22 +1,24 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:ice_cream_truck_app/widgets/dateTimePickerWidget.dart';
-import 'package:ice_cream_truck_app/widgets/mapWidget.dart';
-import 'package:ice_cream_truck_app/widgets/searchWidget.dart';
-import '../place_service.dart';
+import 'package:http/http.dart';
+import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/screens/ListScheduledPage.dart';
+import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
+import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
+import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
+import '../classes/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
-class customerHomePage extends StatefulWidget {
-  static const String id = 'customerHomePage';
-  customerHomePage({required this.title});
-  final String title;
+class DriverHomePage extends StatefulWidget {
+  static const String id = 'driverHomePage';
+  DriverHomePage();
 
   @override
-  _customerHomePageState createState() => _customerHomePageState();
+  _DriverHomePageState createState() => _DriverHomePageState();
 }
 
-class _customerHomePageState extends State<customerHomePage> {
+class _DriverHomePageState extends State<DriverHomePage> {
   String placeId = '';
   DateTime date = DateTime.now();
   Set<Marker> markerSet = {};
@@ -25,43 +27,83 @@ class _customerHomePageState extends State<customerHomePage> {
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-
+  bool sharingLocation = false;
+  late Timer timer;
   @override
   void initState() {
     // TODO: implement initState
-
-    updateUserLocation();
+    this.timer = new Timer.periodic(Duration(seconds: 30), (timer) {
+      sendLocation();
+    });
     super.initState();
+    updateUserLocation();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    this.timer.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(
+            'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'),
         actions: [
           IconButton(
-            icon: const Icon(IconData(0xe514, fontFamily: 'MaterialIcons')),
-            onPressed: queryAndUpdate,
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                ListScheduledPage.id,
+                arguments: {
+                  'driverId':
+                      'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'
+                },
+              );
+            },
           ),
         ],
         bottom: PreferredSize(
           child: Column(
             children: [
-              searchWidget(
+              SearchWidget(
                 placeId,
                 setPlaceId,
                 mapCenter,
                 setMapCenter,
                 goToLocation,
               ),
-              dateTimePickerWidget(date, setDate),
+              DateTimePickerWidget(date, setDate),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text("Send current location to database"),
+                  ),
+                  Switch(
+                    onChanged: (bool value) {
+                      sendLocation();
+                      setState(() {
+                        sharingLocation = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                    value: sharingLocation,
+                  ),
+                ],
+              ),
             ],
           ),
-          preferredSize: Size.fromHeight(100),
+          preferredSize: Size.fromHeight(150),
         ),
       ),
-      body: mapWidget(
+      body: MapWidget(
         mapsController,
         mapCenter,
         setMapCenter,
@@ -106,7 +148,7 @@ class _customerHomePageState extends State<customerHomePage> {
   }
 
   queryAndUpdate() async {
-    var query = await PlaceApiProvider("").getFromDatabase(
+    var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
     setState(() {
       updateMarkers(query);
@@ -152,5 +194,15 @@ class _customerHomePageState extends State<customerHomePage> {
       zoom: 14.4746,
     ));
     goToLocation();
+  }
+
+  void sendLocation() async {
+    if (!sharingLocation) return;
+    var position = await Geolocator.getCurrentPosition();
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
+    final request =
+        'http://localhost:8000/location/report?lat=${position.latitude}&lng=${position.longitude}&scheduled=false&driver_id=${arguments['driverId'] == '' ? 1 : arguments['driverId']}&time=${DateTime.now().millisecondsSinceEpoch}';
+    var client = Client();
+    client.post(Uri.parse((request)));
   }
 }

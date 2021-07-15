@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:ice_cream_truck_app/classes/Suggestion.dart';
 import 'package:uuid/uuid.dart';
 
-import '../address_search.dart';
-import '../place_service.dart';
+import '../classes/AddressSearch.dart';
+import '../classes/PlacesApiProvider.dart';
 
-class searchWidget extends StatelessWidget {
+class SearchWidget extends StatelessWidget {
   String placeId;
   Function setPlaceId;
   CameraPosition mapCenter;
   Function setMapCenter;
   Function goToLocation;
   final textController = TextEditingController();
-  searchWidget(
+  SearchWidget(
     this.placeId,
     this.setPlaceId,
     this.mapCenter,
@@ -52,7 +53,7 @@ class searchWidget extends StatelessWidget {
   }
 
   void updateText(Suggestion result, String sessionToken) async {
-    final placeDetails = await PlaceApiProvider(sessionToken)
+    final placeDetails = await PlacesApiProvider(sessionToken)
         .getPlaceDetailFromId(result.placeId);
     setPlaceId(result.placeId);
     textController.text = result.description;

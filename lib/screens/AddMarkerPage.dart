@@ -1,23 +1,22 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart';
-import 'package:ice_cream_truck_app/widgets/dateTimePickerWidget.dart';
-import 'package:ice_cream_truck_app/widgets/mapWidget.dart';
-import 'package:ice_cream_truck_app/widgets/searchWidget.dart';
-import '../place_service.dart';
+import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
+import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
+import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
+import '../classes/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
-class driverHomePage extends StatefulWidget {
-  static const String id = 'driverHomePage';
-  driverHomePage({required this.title});
-  final String title;
+class AddMarkerPage extends StatefulWidget {
+  static const String id = 'addMarkerPage';
+  AddMarkerPage();
 
   @override
-  _driverHomePageState createState() => _driverHomePageState();
+  _AddMarkerPageState createState() => _AddMarkerPageState();
 }
 
-class _driverHomePageState extends State<driverHomePage> {
+class _AddMarkerPageState extends State<AddMarkerPage> {
   String placeId = '';
   DateTime date = DateTime.now();
   Set<Marker> markerSet = {};
@@ -26,69 +25,43 @@ class _driverHomePageState extends State<driverHomePage> {
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-  bool sharingLocation = false;
-  late Timer timer;
+
   @override
   void initState() {
     // TODO: implement initState
-    this.timer = new Timer.periodic(Duration(seconds: 30), (timer) {
-      sendLocation();
-    });
-    super.initState();
-    updateUserLocation();
-  }
 
-  @override
-  void dispose() {
-    // TODO: implement dispose
-    this.timer.cancel();
-    super.dispose();
+    updateUserLocation();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'),
-        actions: [],
+        title: Text('add marker'),
+        actions: [
+          IconButton(
+            icon: const Icon(IconData(0xe514, fontFamily: 'MaterialIcons')),
+            onPressed: queryAndUpdate,
+          ),
+        ],
         bottom: PreferredSize(
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text("Send current location to database"),
-                  ),
-                  Switch(
-                    onChanged: (bool value) {
-                      sendLocation();
-                      setState(() {
-                        sharingLocation = value;
-                      });
-                    },
-                    activeColor: Colors.green,
-                    value: sharingLocation,
-                  ),
-                ],
-              ),
-              searchWidget(
+              SearchWidget(
                 placeId,
                 setPlaceId,
                 mapCenter,
                 setMapCenter,
                 goToLocation,
               ),
-              dateTimePickerWidget(date, setDate),
+              DateTimePickerWidget(date, setDate),
             ],
           ),
-          preferredSize: Size.fromHeight(150),
+          preferredSize: Size.fromHeight(100),
         ),
       ),
-      body: mapWidget(
+      body: MapWidget(
         mapsController,
         mapCenter,
         setMapCenter,
@@ -133,7 +106,7 @@ class _driverHomePageState extends State<driverHomePage> {
   }
 
   queryAndUpdate() async {
-    var query = await PlaceApiProvider("").getFromDatabase(
+    var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
     setState(() {
       updateMarkers(query);
@@ -179,15 +152,5 @@ class _driverHomePageState extends State<driverHomePage> {
       zoom: 14.4746,
     ));
     goToLocation();
-  }
-
-  void sendLocation() async {
-    if (!sharingLocation) return;
-    var position = await Geolocator.getCurrentPosition();
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
-    final request =
-        'http://localhost:8000/location/report?lat=${position.latitude}&lng=${position.longitude}&driver_id=${arguments['driverId'] == '' ? 1 : arguments['driverId']}&time=${DateTime.now().millisecondsSinceEpoch}';
-    var client = Client();
-    client.post(Uri.parse((request)));
   }
 }
