@@ -49,4 +49,22 @@ class PlacesApiProvider {
       throw Exception('Failed to fetch suggestion');
     }
   }
+
+  Future<String> getPlaceDetailFromCoord(Coordinates coord) async {
+    final request =
+        'https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord.lat},${coord.lng}&key=$apiKey&sessiontoken=$sessionToken';
+    print(request);
+    final response = await client.get(Uri.parse(request));
+
+    if (response.statusCode == 200) {
+      final result = json.decode(response.body);
+      print(result);
+      if (result['status'] == 'OK') {
+        return (result["results"][0]["formatted_address"]);
+      }
+      throw Exception(result['error_message']);
+    } else {
+      throw Exception('Failed to fetch suggestion');
+    }
+  }
 }

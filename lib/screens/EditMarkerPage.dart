@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:ice_cream_truck_app/classes/Coordinates.dart';
 import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
@@ -18,27 +20,31 @@ class EditMarkerPage extends StatefulWidget {
 
 class _EditMarkerPageState extends State<EditMarkerPage> {
   String placeId = '';
-  DateTime date = DateTime.now();
+  DateTime startTime = DateTime.now();
+  DateTime endTime = DateTime.now();
   Set<Marker> markerSet = {};
   Completer<GoogleMapController> mapsController = Completer();
   CameraPosition mapCenter = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-
+  bool inited = false;
+  late Map data;
   @override
   void initState() {
     // TODO: implement initState
 
-    updateUserLocation();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
+    this.data = arguments['data'];
+    setAllData();
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Marker'),
+        title: Text('Edit marker'),
         actions: [
           IconButton(
             icon: const Icon(IconData(0xe514, fontFamily: 'MaterialIcons')),
@@ -55,19 +61,52 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
                 setMapCenter,
                 goToLocation,
               ),
-              DateTimePickerWidget(date, setDate),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  DateTimePickerWidget(startTime, setStartTime, "Start time"),
+                  DateTimePickerWidget(endTime, setEndTime, "End time"),
+                ],
+              ),
+              RichText(
+                text: TextSpan(
+                  children: <TextSpan>[
+                    TextSpan(
+                        text: 'Delete Marker',
+                        style: TextStyle(fontSize: 20, color: Colors.red),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => deleteMarker(context)),
+                    TextSpan(text: "                      "),
+                    TextSpan(
+                        text: 'Save Marker',
+                        style: TextStyle(fontSize: 20, color: Colors.green),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => saveMarker(context)),
+                  ],
+                ),
+              ),
             ],
           ),
           preferredSize: Size.fromHeight(100),
         ),
       ),
-      body: MapWidget(
-        mapsController,
-        mapCenter,
-        setMapCenter,
-        markerSet,
-        queryAndUpdate,
-      ),
+      body: Stack(children: [
+        MapWidget(
+          mapsController,
+          mapCenter,
+          setMapCenter,
+          markerSet,
+          queryAndUpdate,
+        ),
+        Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Center(
+              child: Image(
+            width: 50,
+            image: NetworkImage(
+                'https://lh3.googleusercontent.com/proxy/uj17aaeewADuQ8pRzClkccTgL5PxywyElB-4WD17vTAemfVnVdKffRjZbZFlKIKNFyS6rA9QGUtO5X_pp7bHowe7KjnyWIVK4uw'),
+          ))
+        ]),
+      ]),
       floatingActionButton: Align(
         alignment: Alignment(1.1, 1),
         child: FloatingActionButton.extended(
@@ -92,9 +131,16 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
     });
   }
 
-  void setDate(DateTime date) {
+  void setStartTime(DateTime date) {
     setState(() {
-      this.date = date;
+      this.startTime = date;
+    });
+    queryAndUpdate();
+  }
+
+  void setEndTime(DateTime date) {
+    setState(() {
+      this.endTime = date;
     });
     queryAndUpdate();
   }
@@ -107,7 +153,10 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
 
   queryAndUpdate() async {
     var query = await DatabaseApiProvider.getMarkersFromDatabase(
-        mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
+        mapCenter.target.latitude,
+        mapCenter.target.longitude,
+        50000,
+        startTime);
     setState(() {
       updateMarkers(query);
     });
@@ -116,6 +165,8 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
   updateMarkers(query) {
     this.markerSet = {};
     for (var driver in query) {
+      if (driver["driver_id"].toString() == this.data["driver_id"].toString())
+        continue;
       this.markerSet.add(Marker(
             markerId: MarkerId(driver["driver_id"].toString()),
             position: LatLng(driver["location"]["coordinates"][1],
@@ -152,5 +203,45 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
       zoom: 14.4746,
     ));
     goToLocation();
+  }
+
+  void dismissScreen(context) {
+    Navigator.pop(context);
+  }
+
+  void saveMarker(context) async {
+    String details = await PlacesApiProvider("").getPlaceDetailFromCoord(
+        new Coordinates(mapCenter.target.latitude, mapCenter.target.longitude));
+    print(details);
+    DatabaseApiProvider.sendScheduledLocation(
+        this.data["driver_id"].toString(),
+        mapCenter.target.latitude,
+        mapCenter.target.longitude,
+        this.startTime,
+        this.endTime,
+        details);
+    DatabaseApiProvider.deleteScheduledLocation(this.data["_id"]);
+    dismissScreen(context);
+  }
+
+  void setAllData() {
+    if (inited) return;
+    setState(() {
+      inited = true;
+      startTime = DateTime.parse(this.data["startTime"]).toLocal();
+      endTime = DateTime.parse(this.data["endTime"]).toLocal();
+      setMapCenter(CameraPosition(
+        target: LatLng(this.data["location"]["coordinates"][1],
+            this.data["location"]["coordinates"][0]),
+        zoom: 14.4746,
+      ));
+      print(mapCenter);
+      goToLocation();
+    });
+  }
+
+  deleteMarker(BuildContext context) {
+    DatabaseApiProvider.deleteScheduledLocation(this.data["_id"].toString());
+    dismissScreen(context);
   }
 }

@@ -5,7 +5,6 @@ import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
-import '../classes/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
 class CustomerHomePage extends StatefulWidget {
@@ -55,7 +54,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                 setMapCenter,
                 goToLocation,
               ),
-              DateTimePickerWidget(date, setDate),
+              DateTimePickerWidget(date, setDate, 'Selected time'),
             ],
           ),
           preferredSize: Size.fromHeight(100),
@@ -108,6 +107,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   queryAndUpdate() async {
     var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
+    print(query);
     setState(() {
       updateMarkers(query);
     });
@@ -116,6 +116,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   updateMarkers(query) {
     this.markerSet = {};
     for (var driver in query) {
+      print(driver);
       this.markerSet.add(Marker(
             markerId: MarkerId(driver["driver_id"].toString()),
             position: LatLng(driver["location"]["coordinates"][1],

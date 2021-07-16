@@ -20,6 +20,7 @@ class DriverHomePage extends StatefulWidget {
 
 class _DriverHomePageState extends State<DriverHomePage> {
   String placeId = '';
+  String driverId = '';
   DateTime date = DateTime.now();
   Set<Marker> markerSet = {};
   Completer<GoogleMapController> mapsController = Completer();
@@ -29,11 +30,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
   );
   bool sharingLocation = false;
   late Timer timer;
+
   @override
   void initState() {
-    // TODO: implement initState
     this.timer = new Timer.periodic(Duration(seconds: 30), (timer) {
-      sendLocation();
+      DatabaseApiProvider.sendLocation(sharingLocation, driverId);
     });
     super.initState();
     updateUserLocation();
@@ -49,10 +50,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)!.settings.arguments as Map;
+    this.driverId = arguments['driverId'] == '' ? "1" : arguments['driverId'];
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'),
+        title: Text('driver id is ${driverId}'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -60,10 +61,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
               Navigator.pushNamed(
                 context,
                 ListScheduledPage.id,
-                arguments: {
-                  'driverId':
-                      'driver id is ${arguments['driverId'] == '' ? 1 : arguments['driverId']}'
-                },
+                arguments: {'driverId': driverId},
               );
             },
           ),
@@ -78,7 +76,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 setMapCenter,
                 goToLocation,
               ),
-              DateTimePickerWidget(date, setDate),
+              DateTimePickerWidget(date, setDate, 'Selected time'),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -88,10 +86,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   ),
                   Switch(
                     onChanged: (bool value) {
-                      sendLocation();
                       setState(() {
                         sharingLocation = value;
                       });
+                      DatabaseApiProvider.sendLocation(
+                          sharingLocation, driverId);
                     },
                     activeColor: Colors.green,
                     value: sharingLocation,
@@ -150,6 +149,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   queryAndUpdate() async {
     var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
+    print(query);
     setState(() {
       updateMarkers(query);
     });
@@ -158,6 +158,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   updateMarkers(query) {
     this.markerSet = {};
     for (var driver in query) {
+      if (driver["driver_id"].toString() == this.driverId) continue;
       this.markerSet.add(Marker(
             markerId: MarkerId(driver["driver_id"].toString()),
             position: LatLng(driver["location"]["coordinates"][1],
@@ -194,15 +195,5 @@ class _DriverHomePageState extends State<DriverHomePage> {
       zoom: 14.4746,
     ));
     goToLocation();
-  }
-
-  void sendLocation() async {
-    if (!sharingLocation) return;
-    var position = await Geolocator.getCurrentPosition();
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
-    final request =
-        'http://localhost:8000/location/report?lat=${position.latitude}&lng=${position.longitude}&scheduled=false&driver_id=${arguments['driverId'] == '' ? 1 : arguments['driverId']}&time=${DateTime.now().millisecondsSinceEpoch}';
-    var client = Client();
-    client.post(Uri.parse((request)));
   }
 }
