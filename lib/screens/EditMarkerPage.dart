@@ -101,9 +101,9 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
         Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Center(
               child: Image(
-            width: 50,
+            width: 20,
             image: NetworkImage(
-                'https://lh3.googleusercontent.com/proxy/uj17aaeewADuQ8pRzClkccTgL5PxywyElB-4WD17vTAemfVnVdKffRjZbZFlKIKNFyS6rA9QGUtO5X_pp7bHowe7KjnyWIVK4uw'),
+                'http://www.clker.com/cliparts/e/3/F/I/0/A/google-maps-marker-for-residencelamontagne-hi.png'),
           ))
         ]),
       ]),
@@ -220,7 +220,7 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
         this.startTime,
         this.endTime,
         details);
-    DatabaseApiProvider.deleteScheduledLocation(this.data["_id"]);
+    await DatabaseApiProvider.deleteScheduledLocation(this.data["_id"]);
     dismissScreen(context);
   }
 
@@ -240,8 +240,9 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
     });
   }
 
-  deleteMarker(BuildContext context) {
-    DatabaseApiProvider.deleteScheduledLocation(this.data["_id"].toString());
+  deleteMarker(BuildContext context) async {
+    await DatabaseApiProvider.deleteScheduledLocation(
+        this.data["_id"].toString());
     dismissScreen(context);
   }
 }

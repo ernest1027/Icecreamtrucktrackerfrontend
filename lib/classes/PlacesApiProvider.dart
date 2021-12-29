@@ -10,7 +10,7 @@ class PlacesApiProvider {
 
   final sessionToken;
 
-  final apiKey = 'AIzaSyDpn1DGZqFL26rRcEcds_2_lUCmjz2YNlM';
+  final apiKey = 'AIzaSyAlK64Br8dLihUOej4ReReLt2dUTJSrgcQ';
 
   Future<Coordinates> getPlaceDetailFromId(String placeId) async {
     final request =

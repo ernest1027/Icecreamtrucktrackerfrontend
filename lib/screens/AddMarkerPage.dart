@@ -100,9 +100,9 @@ class _AddMarkerPageState extends State<AddMarkerPage> {
         Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Center(
               child: Image(
-            width: 50,
+            width: 20,
             image: NetworkImage(
-                'https://lh3.googleusercontent.com/proxy/uj17aaeewADuQ8pRzClkccTgL5PxywyElB-4WD17vTAemfVnVdKffRjZbZFlKIKNFyS6rA9QGUtO5X_pp7bHowe7KjnyWIVK4uw'),
+                'http://www.clker.com/cliparts/e/3/F/I/0/A/google-maps-marker-for-residencelamontagne-hi.png'),
           ))
         ]),
       ]),
