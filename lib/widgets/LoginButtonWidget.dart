@@ -13,19 +13,22 @@ class LoginButton extends StatelessWidget {
         children: <Widget>[
           Positioned.fill(
             child: Container(
-              color: Colors.amber,
+              color: Color(0xFFD77FA1),
             ),
           ),
           TextButton(
             style: TextButton.styleFrom(
               padding: const EdgeInsets.all(16.0),
-              primary: Colors.black,
+              primary: Colors.white,
               textStyle: TextStyle(fontSize: 20),
             ),
             onPressed: () {
               this.callback();
             },
-            child: Text(this.text),
+            child: Text(
+              this.text,
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),

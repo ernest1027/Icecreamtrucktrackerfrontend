@@ -2,12 +2,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart';
-import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/AuthApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/screens/LandingPage.dart';
 import 'package:ice_cream_truck_app/screens/ListScheduledPage.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
-import '../classes/PlacesApiProvider.dart';
+import 'package:jwt_decode/jwt_decode.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../classes/apiProviders/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
 class DriverHomePage extends StatefulWidget {
@@ -20,7 +24,6 @@ class DriverHomePage extends StatefulWidget {
 
 class _DriverHomePageState extends State<DriverHomePage> {
   String placeId = '';
-  String driverId = '';
   DateTime date = DateTime.now();
   Set<Marker> markerSet = {};
   Completer<GoogleMapController> mapsController = Completer();
@@ -34,7 +37,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   @override
   void initState() {
     this.timer = new Timer.periodic(Duration(seconds: 30), (timer) {
-      DatabaseApiProvider.sendLocation(sharingLocation, driverId);
+      DatabaseApiProvider.sendLocation(sharingLocation);
     });
     super.initState();
     updateUserLocation();
@@ -49,26 +52,29 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
-    this.driverId = arguments['driverId'] == '' ? "1" : arguments['driverId'];
     return Scaffold(
       appBar: AppBar(
-        title: Text('driver id is ${driverId}'),
+        title: Text('Driver Page'),
+        leading: IconButton(
+          color: Colors.white,
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            AuthApiProvider.logout();
+          },
+        ),
         actions: [
           IconButton(
+            color: Colors.white,
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.pushNamed(
-                context,
-                ListScheduledPage.id,
-                arguments: {'driverId': driverId},
-              );
+              Navigator.pushNamed(context, ListScheduledPage.id);
             },
           ),
         ],
         bottom: PreferredSize(
           child: Column(
             children: [
+              DateTimePickerWidget(date, setDate, 'Change Selected Time'),
               SearchWidget(
                 placeId,
                 setPlaceId,
@@ -76,23 +82,24 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 setMapCenter,
                 goToLocation,
               ),
-              DateTimePickerWidget(date, setDate, 'Selected time'),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Text("Send current location to database"),
+                    child: Text(
+                      "Send current location to database",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                   Switch(
                     onChanged: (bool value) {
                       setState(() {
                         sharingLocation = value;
                       });
-                      DatabaseApiProvider.sendLocation(
-                          sharingLocation, driverId);
+                      DatabaseApiProvider.sendLocation(sharingLocation);
                     },
-                    activeColor: Colors.green,
+                    activeColor: Color(0xFFD77FA1),
                     value: sharingLocation,
                   ),
                 ],
@@ -149,16 +156,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
   queryAndUpdate() async {
     var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
-    print(query);
     setState(() {
       updateMarkers(query);
     });
   }
 
-  updateMarkers(query) {
+  updateMarkers(query) async {
     this.markerSet = {};
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    Map<String, dynamic> payload = Jwt.parseJwt(accessToken!);
     for (var driver in query) {
-      if (driver["driver_id"].toString() == this.driverId) continue;
+      if (driver["driver_id"].toString() == payload['id']) continue;
       this.markerSet.add(Marker(
             markerId: MarkerId(driver["driver_id"].toString()),
             position: LatLng(driver["location"]["coordinates"][1],

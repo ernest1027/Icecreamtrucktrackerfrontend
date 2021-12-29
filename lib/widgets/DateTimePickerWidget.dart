@@ -19,7 +19,7 @@ class DateTimePickerWidget extends StatelessWidget {
       },
       child: Text(
         '${text}: ${TimeOfDay.fromDateTime(date).format(context)}',
-        style: TextStyle(color: Colors.blue),
+        style: TextStyle(color: Colors.black),
       ),
     );
   }

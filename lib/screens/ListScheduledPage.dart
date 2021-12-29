@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/screens/AddMarkerPage.dart';
 import 'package:ice_cream_truck_app/widgets/ScheduleTile.dart';
 
@@ -16,26 +16,28 @@ class _ListScheduledPageState extends State<ListScheduledPage> {
   var getAllScheduledLocations = DatabaseApiProvider.getAllScheduledLocations;
   @override
   Widget build(BuildContext context) {
-    final arguments = ModalRoute.of(context)!.settings.arguments as Map;
-    String driverId = arguments['driverId'] == '' ? 1 : arguments['driverId'];
     return Scaffold(
         appBar: AppBar(
-          title: Text("Your Scheduled locations"),
+          iconTheme: IconThemeData(color: Colors.white),
+          title: Text(
+            "Your Scheduled locations",
+            style: TextStyle(fontSize: 16),
+          ),
           actions: [
             IconButton(
+              color: Colors.white,
               icon: const Icon(Icons.add),
               onPressed: () {
                 Navigator.pushNamed(
                   context,
                   AddMarkerPage.id,
-                  arguments: {'driverId': driverId},
                 ).then((value) => refresh());
               },
             ),
           ],
         ),
         body: FutureBuilder<List>(
-            future: getAllScheduledLocations(driverId),
+            future: getAllScheduledLocations(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 return ListView.builder(

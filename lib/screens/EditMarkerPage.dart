@@ -3,11 +3,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ice_cream_truck_app/classes/Coordinates.dart';
-import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
-import '../classes/PlacesApiProvider.dart';
+import '../classes/apiProviders/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
 class EditMarkerPage extends StatefulWidget {
@@ -212,14 +212,8 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
   void saveMarker(context) async {
     String details = await PlacesApiProvider("").getPlaceDetailFromCoord(
         new Coordinates(mapCenter.target.latitude, mapCenter.target.longitude));
-    print(details);
-    DatabaseApiProvider.sendScheduledLocation(
-        this.data["driver_id"].toString(),
-        mapCenter.target.latitude,
-        mapCenter.target.longitude,
-        this.startTime,
-        this.endTime,
-        details);
+    DatabaseApiProvider.sendScheduledLocation(mapCenter.target.latitude,
+        mapCenter.target.longitude, this.startTime, this.endTime, details);
     await DatabaseApiProvider.deleteScheduledLocation(this.data["_id"]);
     dismissScreen(context);
   }
@@ -235,7 +229,6 @@ class _EditMarkerPageState extends State<EditMarkerPage> {
             this.data["location"]["coordinates"][0]),
         zoom: 14.4746,
       ));
-      print(mapCenter);
       goToLocation();
     });
   }

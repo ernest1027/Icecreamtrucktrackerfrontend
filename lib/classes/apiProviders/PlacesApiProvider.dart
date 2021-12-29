@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart';
 import 'package:ice_cream_truck_app/classes/Suggestion.dart';
-import 'Coordinates.dart';
+import '../Coordinates.dart';
 
 class PlacesApiProvider {
   final client = Client();
@@ -53,12 +53,10 @@ class PlacesApiProvider {
   Future<String> getPlaceDetailFromCoord(Coordinates coord) async {
     final request =
         'https://maps.googleapis.com/maps/api/geocode/json?latlng=${coord.lat},${coord.lng}&key=$apiKey&sessiontoken=$sessionToken';
-    print(request);
     final response = await client.get(Uri.parse(request));
 
     if (response.statusCode == 200) {
       final result = json.decode(response.body);
-      print(result);
       if (result['status'] == 'OK') {
         return (result["results"][0]["formatted_address"]);
       }

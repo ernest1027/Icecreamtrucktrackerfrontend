@@ -28,7 +28,7 @@ class MapWidget extends StatelessWidget {
           queryAndUpdate();
         },
         child: GoogleMap(
-          mapType: MapType.hybrid,
+          mapType: MapType.normal,
           initialCameraPosition: mapCenter,
           onMapCreated: (GoogleMapController controller) {
             this.controller.complete(controller);

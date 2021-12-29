@@ -13,8 +13,8 @@ class ScheduleTile extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: const EdgeInsets.all(16.0),
-          textStyle: TextStyle(fontSize: 20),
-          primary: Colors.amber[100],
+          textStyle: TextStyle(fontSize: 20, color: Color(0xFF000000)),
+          primary: Color(0xFFD77FA1),
         ),
         onPressed: () {
           Navigator.pushNamed(

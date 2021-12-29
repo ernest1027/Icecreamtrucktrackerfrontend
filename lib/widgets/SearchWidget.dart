@@ -4,7 +4,7 @@ import 'package:ice_cream_truck_app/classes/Suggestion.dart';
 import 'package:uuid/uuid.dart';
 
 import '../classes/AddressSearch.dart';
-import '../classes/PlacesApiProvider.dart';
+import '../classes/apiProviders/PlacesApiProvider.dart';
 
 class SearchWidget extends StatelessWidget {
   String placeId;

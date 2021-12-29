@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ice_cream_truck_app/classes/Suggestion.dart';
-import 'PlacesApiProvider.dart';
+import 'apiProviders/PlacesApiProvider.dart';
 
 class AddressSearch extends SearchDelegate<Suggestion> {
   final sessionToken;

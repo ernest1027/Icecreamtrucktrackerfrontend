@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'LandingPage.dart';
 
 class CustomerHomePage extends StatefulWidget {
   static const String id = 'customerHomePage';
@@ -37,9 +40,19 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ice Cream Truck Tracker'),
+        title: Text('Customer Page'),
+        leading: IconButton(
+          color: Colors.white,
+          icon: const Icon(Icons.logout),
+          onPressed: () async {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            prefs.clear();
+            Navigator.pushReplacementNamed(context, LandingPage.id);
+          },
+        ),
         actions: [
           IconButton(
+            color: Colors.white,
             icon: const Icon(IconData(0xe514, fontFamily: 'MaterialIcons')),
             onPressed: queryAndUpdate,
           ),
@@ -107,7 +120,6 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   queryAndUpdate() async {
     var query = await DatabaseApiProvider.getMarkersFromDatabase(
         mapCenter.target.latitude, mapCenter.target.longitude, 50000, date);
-    print(query);
     setState(() {
       updateMarkers(query);
     });
@@ -116,7 +128,6 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   updateMarkers(query) {
     this.markerSet = {};
     for (var driver in query) {
-      print(driver);
       this.markerSet.add(Marker(
             markerId: MarkerId(driver["driver_id"].toString()),
             position: LatLng(driver["location"]["coordinates"][1],

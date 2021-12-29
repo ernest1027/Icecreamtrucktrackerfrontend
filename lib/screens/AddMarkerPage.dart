@@ -3,11 +3,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ice_cream_truck_app/classes/Coordinates.dart';
-import 'package:ice_cream_truck_app/classes/DatabaseApiProvider.dart';
+import 'package:ice_cream_truck_app/classes/apiProviders/DatabaseApiProvider.dart';
 import 'package:ice_cream_truck_app/widgets/DateTimePickerWidget.dart';
 import 'package:ice_cream_truck_app/widgets/MapWidget.dart';
 import 'package:ice_cream_truck_app/widgets/SearchWidget.dart';
-import '../classes/PlacesApiProvider.dart';
+import '../classes/apiProviders/PlacesApiProvider.dart';
 import 'package:geolocator/geolocator.dart';
 
 class AddMarkerPage extends StatefulWidget {
@@ -28,7 +28,6 @@ class _AddMarkerPageState extends State<AddMarkerPage> {
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
   );
-  late String driverId;
   @override
   void initState() {
     // TODO: implement initState
@@ -40,7 +39,6 @@ class _AddMarkerPageState extends State<AddMarkerPage> {
   @override
   Widget build(BuildContext context) {
     final arguments = ModalRoute.of(context)!.settings.arguments as Map;
-    this.driverId = arguments['driverId'] == '' ? 1 : arguments['driverId'];
     return Scaffold(
       appBar: AppBar(
         title: Text('Add marker'),
@@ -209,14 +207,8 @@ class _AddMarkerPageState extends State<AddMarkerPage> {
   void saveMarker(context) async {
     String details = await PlacesApiProvider("").getPlaceDetailFromCoord(
         new Coordinates(mapCenter.target.latitude, mapCenter.target.longitude));
-    print(details);
-    DatabaseApiProvider.sendScheduledLocation(
-        this.driverId,
-        mapCenter.target.latitude,
-        mapCenter.target.longitude,
-        this.startTime,
-        this.endTime,
-        details);
+    DatabaseApiProvider.sendScheduledLocation(mapCenter.target.latitude,
+        mapCenter.target.longitude, this.startTime, this.endTime, details);
     dismissScreen(context);
   }
 }

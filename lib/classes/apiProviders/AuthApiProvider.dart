@@ -1,7 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart';
+import 'package:ice_cream_truck_app/screens/LandingPage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/NavigationService.dart';
 
 class AuthApiProvider {
   static final apiURL = 'http://127.0.0.1:8000';
@@ -12,7 +16,7 @@ class AuthApiProvider {
   }
 
   static dynamic loginCustomer(String email, String password) async {
-    final url = apiURL + '/authentication/login/driver';
+    final url = apiURL + '/authentication/login/customer';
     return genericLogin(url, email, password);
   }
 
@@ -23,9 +27,9 @@ class AuthApiProvider {
     if (response.statusCode >= 400) return response;
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString(
-        'accessToken', json.decode(response.body)["data"].accessToken);
+        'accessToken', json.decode(response.body)["data"]['accessToken']);
     prefs.setString(
-        'refreshToken', json.decode(response.body)["data"].refreshToken);
+        'refreshToken', json.decode(response.body)["data"]['refreshToken']);
     return response;
   }
 
@@ -67,10 +71,13 @@ class AuthApiProvider {
     final accessToken = prefs.getString('accessToken');
     final refreshToken = prefs.getString('refreshToken');
     final client = Client();
-    return client.get(Uri.parse(url), headers: {
+    final response = await client.get(Uri.parse(url), headers: {
       'refreshToken': refreshToken!,
       'Authorization': 'Bearer $accessToken',
     });
+    if (response.statusCode == 403) return logout();
+    updateAccessToken(response);
+    return response;
   }
 
   static dynamic authenticatedPostRequest(url, body) async {
@@ -78,10 +85,13 @@ class AuthApiProvider {
     final accessToken = prefs.getString('accessToken');
     final refreshToken = prefs.getString('refreshToken');
     final client = Client();
-    return client.post(Uri.parse(url), body: body, headers: {
+    final response = await client.post(Uri.parse(url), body: body, headers: {
       'refreshToken': refreshToken!,
       'Authorization': 'Bearer $accessToken',
     });
+    if (response.statusCode == 403) return logout();
+    updateAccessToken(response);
+    return response;
   }
 
   static dynamic authenticatedDeleteRequest(url) async {
@@ -89,9 +99,38 @@ class AuthApiProvider {
     final accessToken = prefs.getString('accessToken');
     final refreshToken = prefs.getString('refreshToken');
     final client = Client();
-    return client.delete(Uri.parse(url), headers: {
+    final response = await client.delete(Uri.parse(url), headers: {
       'refreshToken': refreshToken!,
       'Authorization': 'Bearer $accessToken',
     });
+    if (response.statusCode == 403) return logout();
+    updateAccessToken(response);
+    return response;
+  }
+
+  static void updateAccessToken(response) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (json.decode(response.body)['data']['newAccessToken'] != null)
+      prefs.setString(
+          'accessToken', json.decode(response.body)['data']['newAccessToken']);
+  }
+
+  static dynamic checkIfTokenValid() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final accessToken = prefs.getString('accessToken');
+    final refreshToken = prefs.getString('refreshToken');
+    final client = Client();
+    final response = await client.post(Uri.parse(apiURL + '/test'), headers: {
+      'refreshToken': refreshToken!,
+      'Authorization': 'Bearer $accessToken',
+    });
+    if (response.statusCode == 403) return logout();
+  }
+
+  static void logout() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.clear();
+    NavigationService.instance.navigateToReplacement(
+        MaterialPageRoute(builder: (context) => LandingPage()));
   }
 }
